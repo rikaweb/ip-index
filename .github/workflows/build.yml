@@ -1,5 +1,4 @@
 name: Build blocklists
-
 on:
   workflow_dispatch: {}
   push:
@@ -24,7 +23,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-node@v1
         with:
-          node-version: 14
+          node-version: 16
           registry-url: https://registry.npmjs.org/
       - name: Installing deps
         run: npm run deps:install

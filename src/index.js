@@ -11,12 +11,11 @@ readFileSync(`${__dirname}/../data/asns.csv`).toString().split(/\s+/).forEach((i
     return undefined;
   }
 
-  const [asn, handle, country, description] = item.split(',');
+  const [asn, handle, description] = item.split(',');
 
   asns[asn] = {
     handle,
     description: (description || '').trim().replace(/"/g, ''),
-    country: country === '-' ? null : country,
   };
 });
 
@@ -26,6 +25,7 @@ readFileSync(`${__dirname}/../data/asns_dcs.csv`).toString().split(/\s+/)
     dcAsns[asn] = true;
   });
 
+const asnCidrs = {}
 const rangesIndexed = {};
 
 readFileSync(`${__dirname}/../data/asns_cidrs.csv`).toString()
@@ -36,7 +36,7 @@ readFileSync(`${__dirname}/../data/asns_cidrs.csv`).toString()
       return null;
     }
 
-    const [asn, cidr, first, last] = item.split(',');
+    const [asn, cidr, first, last, country] = item.split(',');
 
     const rangeIndex = +cidr.split('.')[0];
 
@@ -50,7 +50,14 @@ readFileSync(`${__dirname}/../data/asns_cidrs.csv`).toString()
       subnet: cidr,
       asn: +asn,
       hosting: !!dcAsns[asn],
+      country,
     };
+
+    if (!asnCidrs[asn]) {
+      asnCidrs[asn] = []
+    }
+
+    asnCidrs[asn].push(cidr)
 
     if (asns[asn]) {
       asns[asn].subnetsNum = (asns[asn].subnetsNum || 0) + 1;
@@ -61,6 +68,14 @@ readFileSync(`${__dirname}/../data/asns_cidrs.csv`).toString()
 
 function ipToInt(ip) {
   return ip.trim().split('.').reduce((int, oct) => (int << 8) + parseInt(oct, 10), 0) >>> 0;
+}
+
+export function getAsnInfo(asn) {
+  if (!asns[asn]) {
+    return null
+  }
+
+  return { ...asns[asn], subnets: asnCidrs[asn] || [] }
 }
 
 export function getIpInfo(ip) {
